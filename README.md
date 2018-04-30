@@ -43,7 +43,7 @@ openssl x509 -req -days 3650 -sha256 -extensions v3_ca -signkey root.key -in roo
 1, 生成密钥
 
 ```bash
-openssl genrsa -des3 -out server.key 2048
+openssl genrsa -des3 -out server.key 4096
 ```
 
 2，删除密钥密码（可选）
@@ -101,7 +101,7 @@ openssl x509 -req -days 3650 -sha256 -CA root.crt -CAkey root.key -CAcreateseria
 ### 创建私钥
 
 ```bash
-openssl genrsa -des3 -out client.key 2048
+openssl genrsa -des3 -out client.key 4096
 ```
 
 删除私钥密码（选做）
