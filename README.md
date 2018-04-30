@@ -16,6 +16,8 @@ openssl genrsa -des3 -out root.key 4096
 
 ### CA申请文件
 
+> 这个部分可以使用配置的方式写好，而不用每次都一个个的输入，而且REPL还不支持删除，错了一个就要重新开始。配置参见<a href="#csr配置">csr配置</a>
+
 除了`extra`部分，都尽量填
 ```bash
 openssl req -new -key root.key -out root.csr
@@ -60,6 +62,8 @@ openssl req -new -key server.key -out server.csr
 ```
 
 ### 创建服务器证书使用规则
+
+命名为`v3.ext`，就是接来下命令最后的参数
 
 ```
 authorityKeyIdentifier=keyid,issuer
@@ -131,6 +135,67 @@ openssl pkcs12 -export -in server.crt -inkey server.key -out server.pfx
 openssl pkcs12 -export -in client.crt -inkey client.key -out client.pfx
 
 ```
+
+## csr配置
+
+假设文件名称为`csr.conf`。
+```
+# OpenSSL configuration to generate a new key with signing requst for a x509v3 
+# multidomain certificate
+#
+# openssl req -config bla.cnf -new | tee csr.pem
+# or
+# openssl req -config bla.cnf -new -out csr.pem
+[ req ]
+default_bits       = 4096
+default_md         = sha512
+default_keyfile    = key.pem
+prompt             = no
+encrypt_key        = no
+
+# base request
+distinguished_name = req_distinguished_name
+
+# extensions
+req_extensions     = v3_req
+
+# distinguished_name
+[ req_distinguished_name ]
+countryName            = "DE"                     # C=
+stateOrProvinceName    = "Hessen"                 # ST=
+localityName           = "Keller"                 # L=
+postalCode             = "424242"                 # L/postalcode=
+streetAddress          = "Crater 1621"            # L/street=
+organizationName       = "apfelboymschule"        # O=
+organizationalUnitName = "IT Department"          # OU=
+commonName             = "example.com"            # CN=
+emailAddress           = "webmaster@example.com"  # CN/emailAddress=
+
+# req_extensions
+# 这个就是上面的v3.ext
+[ v3_req ]
+# The subject alternative name extension allows various literal values to be 
+# included in the configuration file
+# http://www.openssl.org/docs/apps/x509v3_config.html
+subjectAltName  = @alt_names
+
+[alt_names]
+
+DNS.1 = example.com
+DNS.2 = *.example.com
+
+# vim:ft=config
+```
+
+请求文件好了之后，创建csr文件：
+
+```bash
+openssl req -config csr.conf -new  -key some.key -out some.csr
+```
+
+配置根据自己的需要进行修改。就不用交互式的一个个填，而且填错之后重来一遍，烦死了。
+
+而且这个可以保存，一般是ca一个，server一个。当然全部用一个也没什么关系。`default_keyfile`别弄错了，一个是`root.key`, 一个是`server.key`.
 
 ## 其他
 
